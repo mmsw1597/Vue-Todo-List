@@ -1,3 +1,9 @@
+<script setup lang="ts">
+import TodoCreator from '~/components/TodoCreator.vue'
+</script>
+
 <template>
-  <h1>Main Page!</h1>
+  <main>
+    <TodoCreator />
+  </main>
 </template>
