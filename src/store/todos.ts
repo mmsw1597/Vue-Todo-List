@@ -22,6 +22,10 @@ interface CreateTodoPayload {
   title: string
 }
 
+interface DeleteTodoPayload {
+  id: string
+}
+
 interface ReorderTodosPayload {
   oldIndex: number
   newIndex: number
@@ -33,11 +37,22 @@ const filters: Filters = [
   { label: '완료만', name: 'done' }
 ]
 
+const currentTodo: Todo = {
+  id: '',
+  order: 0,
+  title: '',
+  done: false,
+  createdAt: '',
+  updatedAt: ''
+}
+
 export const useTodosStore = defineStore('todos', {
   state: () => ({
     todos: [] as Todos,
     filterStatus: 'all' as FilterStatus,
-    filters
+    filters,
+    currentTodo,
+    loading: false
   }),
   getters: {
     filteredTodos(state) {
@@ -56,12 +71,22 @@ export const useTodosStore = defineStore('todos', {
   },
   actions: {
     async fetchTodos() {
-      const { data } = await axios.post('/api/todos', {
-        method: 'GET'
-      })
-      this.todos = data
+      if (this.loading) return
+      this.loading = true
+      try {
+        const { data } = await axios.post('/api/todos', {
+          method: 'GET'
+        })
+        this.todos = data
+      } catch (error) {
+        console.error('fetchTodos:', error)
+      } finally {
+        this.loading = false
+      }
     },
     async createTodo({ title }: CreateTodoPayload) {
+      if (this.loading) return
+      this.loading = true
       try {
         const { data: createdTodo } = await axios.post('/api/todos', {
           method: 'POST',
@@ -72,6 +97,8 @@ export const useTodosStore = defineStore('todos', {
         this.todos.unshift(createdTodo)
       } catch (error) {
         console.error('createdTodo: ', error)
+      } finally {
+        this.loading = false
       }
     },
     async updateTodo(todo: Todo) {
@@ -90,6 +117,7 @@ export const useTodosStore = defineStore('todos', {
             done
           }
         })
+        foundTodo.updatedAt = updatedTodo.updatedAt
       } catch (error) {
         console.error('updateTodo: ', error)
         Object.assign(foundTodo, backedUpTodo)
@@ -103,12 +131,24 @@ export const useTodosStore = defineStore('todos', {
         })
       })
     },
+    async deleteTodo({ id }: DeleteTodoPayload) {
+      try {
+        await axios.post('/api/todos', {
+          method: 'DELETE',
+          path: id
+        })
+        this.todos = this.todos.filter((todo) => todo.id !== id)
+      } catch (error) {
+        console.error('deleteTodo:', error)
+      }
+    },
     async deleteDoneTodos() {
       const todoIds = this.todos
         .filter((todo) => todo.done)
         .map((todo) => todo.id)
       if (!todoIds.length) return
 
+      this.loading = true
       try {
         await axios.post('/api/todos', {
           method: 'DELETE',
@@ -120,20 +160,30 @@ export const useTodosStore = defineStore('todos', {
         this.todos = this.todos.filter((todo) => !todoIds.includes(todo.id))
       } catch (error) {
         console.error('deleteDoneTodos:', error)
+      } finally {
+        this.loading = false
       }
     },
-    reorderTodos({ oldIndex, newIndex }: ReorderTodosPayload) {
+    async reorderTodos({ oldIndex, newIndex }: ReorderTodosPayload) {
       if (oldIndex === newIndex) return
+      this.loading = true
       const movedTodo = this.todos.splice(oldIndex, 1)[0]
       this.todos.splice(newIndex, 0, movedTodo)
       const todoIds = this.todos.map((todo) => todo.id)
-      axios.post('/api/todos', {
-        method: 'PUT',
-        path: 'reorder',
-        data: {
-          todoIds
-        }
-      })
+
+      try {
+        await axios.post('/api/todos', {
+          method: 'PUT',
+          path: 'reorder',
+          data: {
+            todoIds
+          }
+        })
+      } catch (error) {
+        console.error('reorderTodos: ', error)
+      } finally {
+        this.loading = false
+      }
     }
   }
 })

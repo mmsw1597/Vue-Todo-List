@@ -29,6 +29,7 @@ body {
   color: #333;
   @include font;
 }
+
 input {
   @include font;
 }
@@ -37,4 +38,24 @@ input {
   box-shadow:
     4px 4px 14px rgba(#000, 0.1),
     4px 4px 50px rgba(#000, 0.2);
+}
+
+.todo-head {
+  height: 60px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: rgba(#fff, 0.9);
+  position: relative;
+  .the-icon {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    left: 24px;
+  }
+  .btn-group {
+    height: 100%;
+    display: flex;
+    position: absolute;
+    right: 0;
+  }
 }
