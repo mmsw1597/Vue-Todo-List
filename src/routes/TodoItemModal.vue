@@ -5,7 +5,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTodosStore } from '~/store/todos'
 import TheIcon from '~/components/TheIcon.vue'
 import TheBtn from '~/components/TheBtn.vue'
-import { update } from 'lodash'
 
 const todosStore = useTodosStore()
 const route = useRoute()
